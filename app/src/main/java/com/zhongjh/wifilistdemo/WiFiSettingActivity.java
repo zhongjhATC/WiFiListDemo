@@ -81,7 +81,7 @@ public class WiFiSettingActivity extends AppCompatActivity {
     /**
      * 初始化事件
      */
-    private void initListener(){
+    private void initListener() {
         mWiFiSettingAdapter.setOnItemClickListener(new WiFiSettingAdapter.onItemClickListener() {
             @Override
             public void onItemClick(View view, int postion, Object o) {
@@ -89,7 +89,7 @@ public class WiFiSettingActivity extends AppCompatActivity {
                 if (wifiBean.getState().equals(WifiContants.WIFI_STATE_UNCONNECT) || wifiBean.getState().equals(WifiContants.WIFI_STATE_CONNECT)) {
                     String capabilities = realWifiList.get(postion).getCapabilities();
                     if (WifiUtils.getWifiCipher(capabilities).equals(WifiCipherType.WIFICIPHER_NOPASS)) {
-                        // 无需密码
+                        // 无需密码，直接连接
                         WifiConfiguration tempConfig = WifiUtils.isExsits(wifiBean.getWifiName());
                         if (tempConfig == null) {
                             WifiConfiguration exsits = WifiUtils.createWifiConfig(wifiBean.getWifiName(), null, WifiCipherType.WIFICIPHER_NOPASS);

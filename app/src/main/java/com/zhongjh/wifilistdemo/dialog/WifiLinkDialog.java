@@ -15,6 +15,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.StyleRes;
 
 import com.zhongjh.wifilistdemo.R;
+import com.zhongjh.wifilistdemo.utils.WifiUtils;
 
 
 public class WifiLinkDialog extends Dialog {
@@ -83,9 +84,9 @@ public class WifiLinkDialog extends Dialog {
         mViewHolder.tvOK.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                WifiConfiguration tempConfig = WifiSupport.isExsits(text_nameString, getContext());
+                WifiConfiguration tempConfig = WifiUtils.isExsits(text_nameString);
                 if (tempConfig == null) {
-                    WifiConfiguration wifiConfiguration = WifiSupport.createWifiConfig(text_nameString, password_edit.getText().toString(), WifiSupport.getWifiCipher(capabilities));
+                    WifiConfiguration wifiConfiguration = WifiUtils.createWifiConfig(text_nameString, password_edit.getText().toString(), WifiSupport.getWifiCipher(capabilities));
                     WifiSupport.addNetWork(wifiConfiguration, getContext());
                 } else {
                     WifiSupport.addNetWork(tempConfig, getContext());
