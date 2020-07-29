@@ -13,7 +13,9 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.zhongjh.wifilistdemo.R;
 import com.zhongjh.wifilistdemo.bean.WifiBean;
-import com.zhongjh.wifilistdemo.contants.WifiContants;
+import com.zhongjh.wifilistdemo.contants.WifiCipherType;
+import com.zhongjh.wifilistdemo.contants.WifiConnectType;
+import com.zhongjh.wifilistdemo.utils.WifiUtils;
 
 import java.util.List;
 
@@ -33,6 +35,10 @@ public class WiFiSettingAdapter extends RecyclerView.Adapter<WiFiSettingAdapter.
         this.resultList = resultList;
     }
 
+    public void setData(List<WifiBean> data) {
+        resultList.clear();
+        resultList.addAll(data);
+    }
 
     @NonNull
     @Override
@@ -48,7 +54,7 @@ public class WiFiSettingAdapter extends RecyclerView.Adapter<WiFiSettingAdapter.
         holder.tvSsid.setText(bean.getWifiName() + "(" + bean.getState() + ")");
 
         // 可以传递给adapter的数据都是经过处理的，已连接或者正在连接状态的wifi都是处于集合中的首位，所以可以写出如下判断
-        if (position == 0 && (WifiContants.WIFI_STATE_ON_CONNECTING.equals(bean.getState()) || WifiContants.WIFI_STATE_CONNECT.equals(bean.getState()))) {
+        if (position == 0 && (WifiConnectType.WIFI_STATE_ON_CONNECTING.equals(bean.getState()) || WifiConnectType.WIFI_STATE_CONNECT.equals(bean.getState()))) {
             holder.tvSsid.setTextColor(mContext.getResources().getColor(R.color.homecolor1));
             holder.tvState.setTextColor(mContext.getResources().getColor(R.color.homecolor1));
         } else {
@@ -56,12 +62,29 @@ public class WiFiSettingAdapter extends RecyclerView.Adapter<WiFiSettingAdapter.
             holder.tvState.setTextColor(mContext.getResources().getColor(R.color.gray_home));
         }
 
-        holder.rootView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                onItemClickListener.onItemClick(view, position, bean);
-            }
-        });
+        // 是否有密码
+        if (WifiUtils.getWifiCipher(bean.getCapabilities()).equals(WifiCipherType.WIFICIPHER_NOPASS)) {
+            holder.imgLock.setVisibility(View.GONE);
+        } else {
+            holder.imgLock.setVisibility(View.VISIBLE);
+        }
+
+        switch (bean.getLevel()) {
+            case 1:
+                holder.imgWifi.setImageDrawable(mContext.getResources().getDrawable(R.drawable.ic_wifi_item_lv5));
+                break;
+            case 2:
+                holder.imgWifi.setImageDrawable(mContext.getResources().getDrawable(R.drawable.ic_wifi_item_lv4));
+                break;
+            case 3:
+                holder.imgWifi.setImageDrawable(mContext.getResources().getDrawable(R.drawable.ic_wifi_item_lv3));
+                break;
+            case 4:
+                holder.imgWifi.setImageDrawable(mContext.getResources().getDrawable(R.drawable.ic_wifi_item_lv2));
+                break;
+        }
+
+        holder.rootView.setOnClickListener(view -> onItemClickListener.onItemClick(view, position, bean));
     }
 
     /**
@@ -82,10 +105,10 @@ public class WiFiSettingAdapter extends RecyclerView.Adapter<WiFiSettingAdapter.
 
 
     public interface onItemClickListener {
-        void onItemClick(View view, int postion, Object o);
+        void onItemClick(View view, int position, Object o);
     }
 
-    public static class ViewHolder extends RecyclerView.ViewHolder{
+    public static class ViewHolder extends RecyclerView.ViewHolder {
 
         public View rootView;
         public TextView tvSsid;
@@ -98,12 +121,12 @@ public class WiFiSettingAdapter extends RecyclerView.Adapter<WiFiSettingAdapter.
         public ViewHolder(View rootView) {
             super(rootView);
             this.rootView = rootView;
-            this.tvSsid = (TextView) rootView.findViewById(R.id.tv_ssid);
-            this.tvState = (TextView) rootView.findViewById(R.id.tv_state);
-            this.imgWifi = (ImageView) rootView.findViewById(R.id.img_wifi);
-            this.imgLock = (ImageView) rootView.findViewById(R.id.img_lock);
-            this.vItem = (View) rootView.findViewById(R.id.vItem);
-            this.vBottom = (View) rootView.findViewById(R.id.vBottom);
+            this.tvSsid = rootView.findViewById(R.id.tv_ssid);
+            this.tvState = rootView.findViewById(R.id.tv_state);
+            this.imgWifi = rootView.findViewById(R.id.img_wifi);
+            this.imgLock = rootView.findViewById(R.id.img_lock);
+            this.vItem = rootView.findViewById(R.id.vItem);
+            this.vBottom = rootView.findViewById(R.id.vBottom);
         }
 
     }

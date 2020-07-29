@@ -20,17 +20,15 @@ import com.zhongjh.wifilistdemo.utils.WifiUtils;
 
 public class WifiLinkDialog extends Dialog {
 
-    ViewHolder mViewHolder;
-    private String text_nameString = null;
-
+    private ViewHolder mViewHolder;
+    private String wifiName;
     private String capabilities;
-
     private Context mContext;
 
 
-    public WifiLinkDialog(@NonNull Context context, @StyleRes int themeResId, String text_nameString, String capabilities) {
+    public WifiLinkDialog(@NonNull Context context, @StyleRes int themeResId, String wifiName, String capabilities) {
         super(context, themeResId);
-        this.text_nameString = text_nameString;
+        this.wifiName = wifiName;
         this.capabilities = capabilities;
         mContext = context;
     }
@@ -41,7 +39,7 @@ public class WifiLinkDialog extends Dialog {
         View view = LayoutInflater.from(mContext).inflate(R.layout.dialog_wifi_link, null);
         setContentView(view);
         mViewHolder = new ViewHolder(view);
-        mViewHolder.tvTitle.setText(text_nameString);
+        mViewHolder.tvTitle.setText(wifiName);
         initListener();
     }
 
@@ -63,41 +61,38 @@ public class WifiLinkDialog extends Dialog {
                 if ((capabilities.contains("WPA") || capabilities.contains("WPA2") || capabilities.contains("WPS"))) {
                     if (mViewHolder.etValue.getText() == null || mViewHolder.etValue.getText().toString().length() < 8) {
                         mViewHolder.tvOK.setClickable(false);
+                        mViewHolder.tvOK.setTextColor(getContext().getResources().getColor(R.color.gray_home));
                     } else {
                         mViewHolder.tvOK.setClickable(true);
+                        mViewHolder.tvOK.setTextColor(getContext().getResources().getColor(R.color.blue));
                     }
                 } else if (capabilities.contains("WEP")) {
                     if (mViewHolder.etValue.getText() == null || mViewHolder.etValue.getText().toString().length() < 8) {
                         mViewHolder.tvOK.setClickable(false);
+                        mViewHolder.tvOK.setTextColor(getContext().getResources().getColor(R.color.gray_home));
                     } else {
                         mViewHolder.tvOK.setClickable(true);
+                        mViewHolder.tvOK.setTextColor(getContext().getResources().getColor(R.color.blue));
                     }
                 }
             }
         });
-        mViewHolder.tvClose.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                dismiss();
+        mViewHolder.tvClose.setOnClickListener(v -> dismiss());
+        mViewHolder.tvOK.setOnClickListener(v -> {
+            WifiConfiguration tempConfig = WifiUtils.isExsits(wifiName);
+            if (tempConfig == null) {
+                // 如果以前没连接过，重新连接
+                WifiConfiguration wifiConfiguration = WifiUtils.createWifiConfig(wifiName, mViewHolder.etValue.getText().toString(), WifiUtils.getWifiCipher(capabilities));
+                WifiUtils.addNetWork(wifiConfiguration);
+            } else {
+                // 直接连接
+                WifiUtils.addNetWork(tempConfig);
             }
-        });
-        mViewHolder.tvOK.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                WifiConfiguration tempConfig = WifiUtils.isExsits(text_nameString);
-                if (tempConfig == null) {
-                    WifiConfiguration wifiConfiguration = WifiUtils.createWifiConfig(text_nameString, password_edit.getText().toString(), WifiSupport.getWifiCipher(capabilities));
-                    WifiSupport.addNetWork(wifiConfiguration, getContext());
-                } else {
-                    WifiSupport.addNetWork(tempConfig, getContext());
-                }
-                dismiss();
-            }
+            dismiss();
         });
     }
 
-    public static
-    class ViewHolder {
+    public static class ViewHolder {
         public View rootView;
         public TextView tvTitle;
         public TextView tvClose;

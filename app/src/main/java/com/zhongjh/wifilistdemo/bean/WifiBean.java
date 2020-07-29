@@ -3,7 +3,7 @@ package com.zhongjh.wifilistdemo.bean;
 public class WifiBean implements Comparable<WifiBean> {
 
     private String wifiName; // wifi名称
-    private String level; // wifi信号
+    private int level; // wifi信号
     private String state; // 已连接  正在连接  未连接 三种状态
     private String capabilities; // 加密方式
 
@@ -33,11 +33,11 @@ public class WifiBean implements Comparable<WifiBean> {
         this.wifiName = wifiName;
     }
 
-    public String getLevel() {
+    public int getLevel() {
         return level;
     }
 
-    public void setLevel(String level) {
+    public void setLevel(int level) {
         this.level = level;
     }
 
@@ -51,8 +51,8 @@ public class WifiBean implements Comparable<WifiBean> {
 
     @Override
     public int compareTo(WifiBean o) {
-        int level1 = Integer.parseInt(this.getLevel());
-        int level2 = Integer.parseInt(o.getLevel());
+        int level1 = this.getLevel();
+        int level2 = o.getLevel();
         return level1 - level2;
     }
 }

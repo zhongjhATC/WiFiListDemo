@@ -16,6 +16,25 @@ import java.util.List;
 public class WifiUtils {
 
     /**
+     * 获取当前连接wifi实体
+     */
+    public static WifiInfo getConnectedWifiInfo() {
+        WifiManager wifimanager = (WifiManager) App.getInstance().getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+        return wifimanager.getConnectionInfo();
+    }
+
+    /**
+     * 扫描之前需要刷新附近的Wifi列表，这需要使用startScan方法
+     * 谷歌现在已经记录了startScan()函数在Android P中的限制:
+     * “我们将进一步限制扫描应用程序的数量，以提高网络性能和电池寿命。
+     * startscan()的使用限制为:-每个前台应用程序被限制为每2分钟扫描4次。所有后台应用程序加起来只能每30分钟扫描一次。”
+     */
+    public static void scanStart() {
+        WifiManager wifimanager = (WifiManager) App.getInstance().getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+        wifimanager.startScan();
+    }
+
+    /**
      * @return 返回wifi列表
      */
     public static List<ScanResult> getWifiScanResult() {
@@ -97,6 +116,26 @@ public class WifiUtils {
             }
         }
         return result;
+    }
+
+    /**
+     * 打开WIFI
+     */
+    public static void openWifi() {
+        WifiManager wifimanager = (WifiManager) App.getInstance().getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+        if (!wifimanager.isWifiEnabled()) {
+            wifimanager.setWifiEnabled(true);
+        }
+    }
+
+    /**
+     * 关闭WIFI
+     */
+    public static void closeWifi() {
+        WifiManager wifimanager = (WifiManager) App.getInstance().getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+        if (wifimanager.isWifiEnabled()) {
+            wifimanager.setWifiEnabled(false);
+        }
     }
 
     /**

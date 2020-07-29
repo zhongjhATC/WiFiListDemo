@@ -3,6 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:background="@color/white"
     android:orientation="vertical">
 
     <TextView
@@ -34,7 +35,7 @@
     <View
         android:layout_width="match_parent"
         android:layout_height="0.5dp"
-        android:background="#2BC7E5" />
+        android:background="@color/blue" />
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -49,7 +50,7 @@
             android:layout_weight="1"
             android:gravity="center"
             android:text="取消"
-            android:textColor="#2BC7E5"
+            android:textColor="@color/blue"
             android:textSize="28sp"
             android:textStyle="bold"
             tools:ignore="HardcodedText" />
@@ -57,7 +58,7 @@
         <View
             android:layout_width="0.5dp"
             android:layout_height="match_parent"
-            android:background="#2BC7E5" />
+            android:background="@color/blue" />
 
         <TextView
             android:id="@+id/tvOK"
@@ -67,7 +68,7 @@
             android:layout_weight="1"
             android:gravity="center"
             android:text="确定"
-            android:textColor="#2BC7E5"
+            android:textColor="@color/gray_home"
             android:textSize="28sp"
             android:textStyle="bold"
             tools:ignore="HardcodedText" />
