@@ -68,19 +68,9 @@ public class WiFiSettingActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_wifi_setting);
         mViewHolder = new ViewHolder(WiFiSettingActivity.this);
-        mHasPermission = checkPermission();
         mWiFiSettingAdapter = new WiFiSettingAdapter(this, mRealWifiList);
-        if (!mHasPermission && WifiUtils.isOpenWifi()) {
-            // 未获取权限，申请权限
-            requestPermission();
-        } else if (mHasPermission && WifiUtils.isOpenWifi()) {
-            // 已经获取权限
-            initData();
-            initListener();
-            startTimeTask();
-        } else {
-            Toast.makeText(WiFiSettingActivity.this, "WIFI处于关闭状态", Toast.LENGTH_SHORT).show();
-        }
+        init();
+        initListener();
     }
 
     @Override
@@ -95,6 +85,39 @@ public class WiFiSettingActivity extends AppCompatActivity {
         this.registerReceiver(mWifiReceiver, filter);
     }
 
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        boolean hasAllGranted = true;
+        for (int grantResult : grantResults) {
+            if (grantResult == PackageManager.PERMISSION_DENIED) {
+                hasAllGranted = false;
+                break;
+            }
+        }
+        if (hasAllGranted) {
+            // 权限请求成功
+            init();
+        }
+    }
+
+    /**
+     * 判断权限是否通过，如果通过就初始化
+     */
+    private void init() {
+        mHasPermission = checkPermission();
+        if (!mHasPermission && WifiUtils.isOpenWifi()) {
+            // 未获取权限，申请权限
+            requestPermission();
+        } else if (mHasPermission && WifiUtils.isOpenWifi()) {
+            // 已经获取权限
+            initData();
+            startTimeTask();
+        } else {
+            Toast.makeText(WiFiSettingActivity.this, "WIFI处于关闭状态", Toast.LENGTH_SHORT).show();
+        }
+    }
+
     /**
      * 申请权限
      */
@@ -103,7 +126,7 @@ public class WiFiSettingActivity extends AppCompatActivity {
     }
 
     /**
-     * 加载wifi数据
+     * 加载
      */
     private void initData() {
         if (WifiUtils.isOpenWifi()) {
@@ -119,6 +142,9 @@ public class WiFiSettingActivity extends AppCompatActivity {
         } else {
             Toast.makeText(WiFiSettingActivity.this, "WIFI处于关闭状态或权限获取失败", Toast.LENGTH_SHORT).show();
         }
+
+
+
     }
 
     /**
