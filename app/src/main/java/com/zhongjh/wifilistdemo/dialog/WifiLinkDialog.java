@@ -10,12 +10,15 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.StyleRes;
 
+import com.thanosfisherman.wifiutils.WifiUtils;
+import com.thanosfisherman.wifiutils.wifiConnect.ConnectionErrorCode;
+import com.thanosfisherman.wifiutils.wifiConnect.ConnectionSuccessListener;
 import com.zhongjh.wifilistdemo.R;
-import com.zhongjh.wifilistdemo.utils.WifiUtils;
 
 
 public class WifiLinkDialog extends Dialog {
@@ -79,15 +82,32 @@ public class WifiLinkDialog extends Dialog {
         });
         mViewHolder.tvClose.setOnClickListener(v -> dismiss());
         mViewHolder.tvOK.setOnClickListener(v -> {
-            WifiConfiguration tempConfig = WifiUtils.isExsits(wifiName);
-            if (tempConfig == null) {
-                // 如果以前没连接过，重新连接
-                WifiConfiguration wifiConfiguration = WifiUtils.createWifiConfig(wifiName, mViewHolder.etValue.getText().toString(), WifiUtils.getWifiCipher(capabilities));
-                WifiUtils.addNetWork(wifiConfiguration);
-            } else {
-                // 直接连接
-                WifiUtils.addNetWork(tempConfig);
-            }
+            WifiUtils.withContext(mContext)
+                    .connectWith(wifiName,  mViewHolder.etValue.getText().toString())
+                    .setTimeout(40000)
+                    .onConnectionResult(new ConnectionSuccessListener() {
+                        @Override
+                        public void success() {
+                            Toast.makeText(mContext, "SUCCESS!", Toast.LENGTH_SHORT).show();
+                        }
+
+                        @Override
+                        public void failed(@NonNull ConnectionErrorCode errorCode) {
+                            Toast.makeText(mContext, "EPIC FAIL!" + errorCode.toString(), Toast.LENGTH_SHORT).show();
+                        }
+                    })
+                    .start();
+
+
+//            WifiConfiguration tempConfig = WifiUtils.isExsits(wifiName);
+//            if (tempConfig == null) {
+//                // 如果以前没连接过，重新连接
+//                WifiConfiguration wifiConfiguration = WifiUtils.createWifiConfig(wifiName, mViewHolder.etValue.getText().toString(), WifiUtils.getWifiCipher(capabilities));
+//                WifiUtils.addNetWork(wifiConfiguration);
+//            } else {
+//                // 直接连接
+//                WifiUtils.addNetWork(tempConfig);
+//            }
             dismiss();
         });
     }

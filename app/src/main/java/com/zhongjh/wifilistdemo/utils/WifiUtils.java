@@ -5,6 +5,7 @@ import android.net.wifi.ScanResult;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
+import android.os.Build;
 import android.text.TextUtils;
 
 import com.zhongjh.wifilistdemo.App;
@@ -62,33 +63,72 @@ public class WifiUtils {
         config.allowedProtocols.clear();
         config.SSID = "\"" + SSID + "\"";
 
+        // 对输入的配置设置EAP加密方式
+
         if (type.equals(WifiCipherType.WIFICIPHER_NOPASS)) {
+//            config.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.NONE);
+
             config.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.NONE);
+            config.allowedProtocols.set(WifiConfiguration.Protocol.RSN);
+            config.allowedProtocols.set(WifiConfiguration.Protocol.WPA);
+            config.allowedAuthAlgorithms.clear();
+            config.allowedPairwiseCiphers.set(WifiConfiguration.PairwiseCipher.CCMP);
+            config.allowedPairwiseCiphers.set(WifiConfiguration.PairwiseCipher.TKIP);
+            config.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.WEP40);
+            config.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.WEP104);
+            config.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.CCMP);
+            config.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.TKIP);
         }
 
         if (type.equals(WifiCipherType.WIFICIPHER_WEP)) {
-            config.preSharedKey = "\"" + password + "\"";
-            config.hiddenSSID = true;
+//            config.preSharedKey = "\"" + password + "\"";
+//            config.hiddenSSID = true;
+//            config.allowedAuthAlgorithms.set(WifiConfiguration.AuthAlgorithm.OPEN);
+//            config.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.CCMP);
+//            config.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.TKIP);
+//            config.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.WEP40);
+//            config.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.WEP104);
+//            config.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.NONE);
+//            config.wepTxKeyIndex = 0;
+
+            // WEP Security
+            config.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.NONE);
+            config.allowedProtocols.set(WifiConfiguration.Protocol.RSN);
+            config.allowedProtocols.set(WifiConfiguration.Protocol.WPA);
             config.allowedAuthAlgorithms.set(WifiConfiguration.AuthAlgorithm.OPEN);
-            config.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.CCMP);
-            config.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.TKIP);
+            config.allowedAuthAlgorithms.set(WifiConfiguration.AuthAlgorithm.SHARED);
+            config.allowedPairwiseCiphers.set(WifiConfiguration.PairwiseCipher.CCMP);
+            config.allowedPairwiseCiphers.set(WifiConfiguration.PairwiseCipher.TKIP);
             config.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.WEP40);
             config.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.WEP104);
-            config.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.NONE);
+
+            if (getHexKey(password)) config.wepKeys[0] = password;
+            else config.wepKeys[0] = "\"".concat(password).concat("\"");
             config.wepTxKeyIndex = 0;
         }
 
         if (type.equals(WifiCipherType.WIFICIPHER_WPA)) {
-            config.preSharedKey = "\"" + password + "\"";
-            config.hiddenSSID = true;
-            config.allowedAuthAlgorithms.set(WifiConfiguration.AuthAlgorithm.OPEN);
-            config.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.TKIP);
-            config.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.CCMP);
-            config.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.WPA_PSK);
-            config.allowedPairwiseCiphers.set(WifiConfiguration.PairwiseCipher.TKIP);
-            config.allowedPairwiseCiphers.set(WifiConfiguration.PairwiseCipher.CCMP);
-            config.status = WifiConfiguration.Status.ENABLED;
+//            config.preSharedKey = "\"" + password + "\"";
+//            config.hiddenSSID = true;
+//            config.allowedAuthAlgorithms.set(WifiConfiguration.AuthAlgorithm.OPEN);
+//            config.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.TKIP);
+//            config.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.CCMP);
+//            config.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.WPA_PSK);
+//            config.allowedPairwiseCiphers.set(WifiConfiguration.PairwiseCipher.TKIP);
+//            config.allowedPairwiseCiphers.set(WifiConfiguration.PairwiseCipher.CCMP);
+//            config.status = WifiConfiguration.Status.ENABLED;
 
+            // wpa
+            config.allowedProtocols.set(WifiConfiguration.Protocol.RSN);
+            config.allowedProtocols.set(WifiConfiguration.Protocol.WPA);
+            config.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.WPA_PSK);
+            config.allowedPairwiseCiphers.set(WifiConfiguration.PairwiseCipher.CCMP);
+            config.allowedPairwiseCiphers.set(WifiConfiguration.PairwiseCipher.TKIP);
+            config.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.WEP40);
+            config.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.WEP104);
+            config.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.CCMP);
+            config.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.TKIP);
+            config.preSharedKey = "\"".concat(password).concat("\"");
         }
 
         return config;
@@ -226,6 +266,26 @@ public class WifiUtils {
         } else {
             return 4;
         }
+    }
+
+    private static boolean getHexKey(String s) {
+        if (s == null) {
+            return false;
+        }
+
+        int len = s.length();
+        if (len != 10 && len != 26 && len != 58) {
+            return false;
+        }
+
+        for (int i = 0; i < len; ++i) {
+            char c = s.charAt(i);
+            if ((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F')) {
+                continue;
+            }
+            return false;
+        }
+        return true;
     }
 
 

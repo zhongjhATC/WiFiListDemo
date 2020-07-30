@@ -69,6 +69,8 @@ public class WiFiSettingActivity extends AppCompatActivity {
         setContentView(R.layout.activity_wifi_setting);
         mViewHolder = new ViewHolder(WiFiSettingActivity.this);
         mWiFiSettingAdapter = new WiFiSettingAdapter(this, mRealWifiList);
+        mViewHolder.rvWifi.setLayoutManager(new LinearLayoutManager(this));
+        mViewHolder.rvWifi.setAdapter(mWiFiSettingAdapter);
         init();
         initListener();
     }
@@ -83,6 +85,13 @@ public class WiFiSettingActivity extends AppCompatActivity {
         filter.addAction(WifiManager.NETWORK_STATE_CHANGED_ACTION); // 监听wifi连接状态广播,是否连接了一个有效路由
         filter.addAction(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION); // 监听wifi列表变化（开启一个热点或者关闭一个热点）
         this.registerReceiver(mWifiReceiver, filter);
+    }
+
+    @Override
+    protected void onDestroy() {
+        this.unregisterReceiver(mWifiReceiver);
+        this.mCompositeDisposable.clear();
+        super.onDestroy();
     }
 
     @Override
@@ -134,9 +143,6 @@ public class WiFiSettingActivity extends AppCompatActivity {
         } else {
             mViewHolder.cbWifiSwitch.setChecked(false);
         }
-
-        mViewHolder.rvWifi.setLayoutManager(new LinearLayoutManager(this));
-        mViewHolder.rvWifi.setAdapter(mWiFiSettingAdapter);
         if (WifiUtils.isOpenWifi() && mHasPermission) {
             sortScaResultView();
         } else {

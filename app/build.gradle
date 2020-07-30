@@ -37,4 +37,6 @@ dependencies {
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
     implementation 'androidx.recyclerview:recyclerview:1.1.0'
     api 'com.jakewharton.rxbinding3:rxbinding:3.1.0' // rxjava2
+    api 'com.thanosfisherman.wifiutils:wifiutils:1.6.2'
+
 }
