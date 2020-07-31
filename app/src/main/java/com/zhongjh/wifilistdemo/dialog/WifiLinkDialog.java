@@ -63,32 +63,40 @@ public class WifiLinkDialog extends Dialog {
                 // 一些格式识别
                 if ((capabilities.contains("WPA") || capabilities.contains("WPA2") || capabilities.contains("WPS"))) {
                     if (mViewHolder.etValue.getText() == null || mViewHolder.etValue.getText().toString().length() < 8) {
-                        mViewHolder.tvOK.setClickable(false);
+                        mViewHolder.tvOK.setOnClickListener(null);
                         mViewHolder.tvOK.setTextColor(getContext().getResources().getColor(R.color.gray_home));
                     } else {
-                        mViewHolder.tvOK.setClickable(true);
+                        mViewHolder.tvOK.setOnClickListener(new OnOKListener());
                         mViewHolder.tvOK.setTextColor(getContext().getResources().getColor(R.color.blue));
                     }
                 } else if (capabilities.contains("WEP")) {
                     if (mViewHolder.etValue.getText() == null || mViewHolder.etValue.getText().toString().length() < 8) {
-                        mViewHolder.tvOK.setClickable(false);
+                        mViewHolder.tvOK.setOnClickListener(null);
                         mViewHolder.tvOK.setTextColor(getContext().getResources().getColor(R.color.gray_home));
                     } else {
-                        mViewHolder.tvOK.setClickable(true);
+                        mViewHolder.tvOK.setOnClickListener(new OnOKListener());
                         mViewHolder.tvOK.setTextColor(getContext().getResources().getColor(R.color.blue));
                     }
                 }
             }
         });
         mViewHolder.tvClose.setOnClickListener(v -> dismiss());
-        mViewHolder.tvOK.setOnClickListener(v -> {
+    }
+
+    /**
+     * 点击事件
+     */
+    private class OnOKListener implements View.OnClickListener {
+
+        @Override
+        public void onClick(View v) {
             WifiUtils.withContext(mContext)
-                    .connectWith(wifiName,  mViewHolder.etValue.getText().toString())
+                    .connectWith(wifiName, mViewHolder.etValue.getText().toString())
                     .setTimeout(40000)
                     .onConnectionResult(new ConnectionSuccessListener() {
                         @Override
                         public void success() {
-                            Toast.makeText(mContext, "SUCCESS!", Toast.LENGTH_SHORT).show();
+//                            Toast.makeText(mContext, "SUCCESS!", Toast.LENGTH_SHORT).show();
                         }
 
                         @Override
@@ -97,11 +105,9 @@ public class WifiLinkDialog extends Dialog {
                         }
                     })
                     .start();
-
-
 //            WifiConfiguration tempConfig = WifiUtils.isExsits(wifiName);
 //            if (tempConfig == null) {
-//                // 如果以前没连接过，重新连接
+            // 如果以前没连接过，重新连接
 //                WifiConfiguration wifiConfiguration = WifiUtils.createWifiConfig(wifiName, mViewHolder.etValue.getText().toString(), WifiUtils.getWifiCipher(capabilities));
 //                WifiUtils.addNetWork(wifiConfiguration);
 //            } else {
@@ -109,7 +115,8 @@ public class WifiLinkDialog extends Dialog {
 //                WifiUtils.addNetWork(tempConfig);
 //            }
             dismiss();
-        });
+        }
+
     }
 
     public static class ViewHolder {
