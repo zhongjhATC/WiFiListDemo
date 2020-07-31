@@ -183,14 +183,14 @@ public class WiFiSettingActivity extends AppCompatActivity {
         mViewHolder.cbWifiSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
             if (isChecked) {
                 // 打开wifi
-                WifiUtils.openWifi();
-                // 显示view
-                mViewHolder.llWiFi.setVisibility(View.VISIBLE);
-                WifiUtils.scanStart();
-                queryWifiList();
+                com.thanosfisherman.wifiutils.WifiUtils.withContext(getApplicationContext()).enableWifi(isSuccess -> {
+                    // 显示view
+                    mViewHolder.llWiFi.setVisibility(View.VISIBLE);
+                    queryWifiList();
+                });
             } else {
                 // 关闭wifi
-                WifiUtils.closeWifi();
+                com.thanosfisherman.wifiutils.WifiUtils.withContext(getApplicationContext()).disableWifi();
                 // 隐藏view
                 mViewHolder.llWiFi.setVisibility(View.GONE);
                 // 清除数据
@@ -284,8 +284,39 @@ public class WiFiSettingActivity extends AppCompatActivity {
     }
 
     public void wifiListSetView(String wifiName, int type) {
-        wifiListSet(mRealWifiList, wifiName, type);
-        mWiFiSettingAdapter.notifyDataSetChanged();
+        com.thanosfisherman.wifiutils.WifiUtils.withContext(getApplicationContext()).scanWifi(scanResults ->
+                Observable.create((ObservableOnSubscribe<List<WifiBean>>) emitter -> {
+                    if (!emitter.isDisposed()) {
+                        List<WifiBean> wifiBeans = sortScaResult(scanResults);
+                        wifiBeans = wifiListSet(wifiBeans, wifiName, type);
+                        emitter.onNext(wifiBeans);
+                        emitter.onComplete();
+                    }
+                }).subscribeOn(Schedulers.io())
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe(new Observer<List<WifiBean>>() {
+
+                            @Override
+                            public void onSubscribe(Disposable d) {
+                                mCompositeDisposable.add(d);
+                            }
+
+                            @Override
+                            public void onNext(List<WifiBean> s) {
+                                mWiFiSettingAdapter.setData(s);
+                                mWiFiSettingAdapter.notifyDataSetChanged();
+                                mViewHolder.swRefresh.setRefreshing(false);
+                            }
+
+                            @Override
+                            public void onError(Throwable e) {
+                            }
+
+                            @Override
+                            public void onComplete() {
+
+                            }
+                        })).start();
     }
 
     /**
