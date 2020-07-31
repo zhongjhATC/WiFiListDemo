@@ -10,7 +10,6 @@ import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.CheckBox;
-import android.widget.CompoundButton;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.Toast;
@@ -20,6 +19,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.zhongjh.wifilistdemo.adapter.WiFiSettingAdapter;
 import com.zhongjh.wifilistdemo.bean.WifiBean;
@@ -67,6 +67,7 @@ public class WiFiSettingActivity extends AppCompatActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_wifi_setting);
+        com.thanosfisherman.wifiutils.WifiUtils.enableLog(true);
         mViewHolder = new ViewHolder(WiFiSettingActivity.this);
         mWiFiSettingAdapter = new WiFiSettingAdapter(this, mRealWifiList);
         mViewHolder.rvWifi.setLayoutManager(new LinearLayoutManager(this));
@@ -121,7 +122,7 @@ public class WiFiSettingActivity extends AppCompatActivity {
         } else if (mHasPermission && WifiUtils.isOpenWifi()) {
             // 已经获取权限
             initData();
-            startTimeTask();
+//            startTimeTask();
         } else {
             Toast.makeText(WiFiSettingActivity.this, "WIFI处于关闭状态", Toast.LENGTH_SHORT).show();
         }
@@ -144,11 +145,10 @@ public class WiFiSettingActivity extends AppCompatActivity {
             mViewHolder.cbWifiSwitch.setChecked(false);
         }
         if (WifiUtils.isOpenWifi() && mHasPermission) {
-            sortScaResultView();
+            queryWifiList();
         } else {
             Toast.makeText(WiFiSettingActivity.this, "WIFI处于关闭状态或权限获取失败", Toast.LENGTH_SHORT).show();
         }
-
 
 
     }
@@ -157,6 +157,7 @@ public class WiFiSettingActivity extends AppCompatActivity {
      * 初始化事件
      */
     private void initListener() {
+        mViewHolder.swRefresh.setOnRefreshListener(this::queryWifiList);
         mWiFiSettingAdapter.setOnItemClickListener((view, position, o) -> {
             WifiBean wifiBean = mRealWifiList.get(position);
             if (wifiBean.getState().equals(WifiConnectType.WIFI_STATE_UNCONNECT) || wifiBean.getState().equals(WifiConnectType.WIFI_STATE_CONNECT)) {
@@ -186,7 +187,7 @@ public class WiFiSettingActivity extends AppCompatActivity {
                 // 显示view
                 mViewHolder.llWiFi.setVisibility(View.VISIBLE);
                 WifiUtils.scanStart();
-                wifiListChange();
+                queryWifiList();
             } else {
                 // 关闭wifi
                 WifiUtils.closeWifi();
@@ -200,45 +201,52 @@ public class WiFiSettingActivity extends AppCompatActivity {
     }
 
     /**
-     * 获取wifi列表然后将bean转成自己定义的WifiBean
+     * 查询wifi列表
      */
-    public void sortScaResultView() {
-        Observable.create((ObservableOnSubscribe<List<WifiBean>>) emitter -> {
-            if (!emitter.isDisposed()) {
-                emitter.onNext(sortScaResult());
-                emitter.onComplete();
-            }
-        }).subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new Observer<List<WifiBean>>() {
-
-                    @Override
-                    public void onSubscribe(Disposable d) {
-                        mCompositeDisposable.add(d);
+    public void queryWifiList() {
+        com.thanosfisherman.wifiutils.WifiUtils.withContext(getApplicationContext()).scanWifi(scanResults ->
+                Observable.create((ObservableOnSubscribe<List<WifiBean>>) emitter -> {
+                    if (!emitter.isDisposed()) {
+                        List<WifiBean> wifiBeans = sortScaResult(scanResults);
+                        WifiInfo connectedWifiInfo = WifiUtils.getConnectedWifiInfo();
+                        if (connectedWifiInfo != null) {
+                            wifiBeans = wifiListSet(wifiBeans, connectedWifiInfo.getSSID(), mConnectType);
+                        }
+                        emitter.onNext(wifiBeans);
+                        emitter.onComplete();
                     }
+                }).subscribeOn(Schedulers.io())
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe(new Observer<List<WifiBean>>() {
 
-                    @Override
-                    public void onNext(List<WifiBean> s) {
-                        mWiFiSettingAdapter.setData(s);
-                        mWiFiSettingAdapter.notifyDataSetChanged();
-                    }
+                            @Override
+                            public void onSubscribe(Disposable d) {
+                                mCompositeDisposable.add(d);
+                            }
 
-                    @Override
-                    public void onError(Throwable e) {
-                    }
+                            @Override
+                            public void onNext(List<WifiBean> s) {
+                                mWiFiSettingAdapter.setData(s);
+                                mWiFiSettingAdapter.notifyDataSetChanged();
+                                mViewHolder.swRefresh.setRefreshing(false);
+                            }
 
-                    @Override
-                    public void onComplete() {
+                            @Override
+                            public void onError(Throwable e) {
+                            }
 
-                    }
-                });
+                            @Override
+                            public void onComplete() {
+
+                            }
+                        })).start();
     }
 
     /**
      * 获取wifi列表然后将bean转成自己定义的WifiBean
      */
-    private List<WifiBean> sortScaResult() {
-        List<ScanResult> scanResults = WifiUtils.noSameName(WifiUtils.getWifiScanResult());
+    private List<WifiBean> sortScaResult(List<ScanResult> list) {
+        List<ScanResult> scanResults = WifiUtils.noSameName(list);
         List<WifiBean> realWifiList = new ArrayList<>();
         if (!CollectionUtils.isNullOrEmpty(scanResults)) {
             for (int i = 0; i < scanResults.size(); i++) {
@@ -268,53 +276,11 @@ public class WiFiSettingActivity extends AppCompatActivity {
                 @Override
                 public void run() {
                     WifiUtils.scanStart();
-                    wifiListChange();
+                    queryWifiList();
                 }
             };
         }
         timer.schedule(timerTask, 0, 2 * 1000);
-    }
-
-    /**
-     * 网络状态发生改变
-     */
-    public void wifiListChange() {
-        Observable.create((ObservableOnSubscribe<List<WifiBean>>) emitter -> {
-            if (!emitter.isDisposed()) {
-                List<WifiBean> wifiBeans = sortScaResult();
-                WifiInfo connectedWifiInfo = WifiUtils.getConnectedWifiInfo();
-                if (connectedWifiInfo != null) {
-                    wifiBeans = wifiListSet(wifiBeans, connectedWifiInfo.getSSID(), mConnectType);
-                }
-                emitter.onNext(wifiBeans);
-                emitter.onComplete();
-            }
-        }).subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new Observer<List<WifiBean>>() {
-
-                    @Override
-                    public void onSubscribe(Disposable d) {
-                        mCompositeDisposable.add(d);
-                    }
-
-                    @Override
-                    public void onNext(List<WifiBean> s) {
-                        mWiFiSettingAdapter.setData(s);
-                        mWiFiSettingAdapter.notifyDataSetChanged();
-                    }
-
-                    @Override
-                    public void onError(Throwable e) {
-                    }
-
-                    @Override
-                    public void onComplete() {
-
-                    }
-                });
-
-
     }
 
     public void wifiListSetView(String wifiName, int type) {
@@ -395,12 +361,14 @@ public class WiFiSettingActivity extends AppCompatActivity {
         public ProgressBar progressWifi;
         public RecyclerView rvWifi;
         public LinearLayout llWiFi;
+        public SwipeRefreshLayout swRefresh;
 
         public ViewHolder(WiFiSettingActivity rootView) {
             this.cbWifiSwitch = (CheckBox) rootView.findViewById(R.id.cb_wifi_switch);
             this.progressWifi = (ProgressBar) rootView.findViewById(R.id.progress_wifi);
             this.rvWifi = (RecyclerView) rootView.findViewById(R.id.rv_wifi);
             this.llWiFi = rootView.findViewById(R.id.llWiFi);
+            this.swRefresh = rootView.findViewById(R.id.swRefresh);
         }
 
     }

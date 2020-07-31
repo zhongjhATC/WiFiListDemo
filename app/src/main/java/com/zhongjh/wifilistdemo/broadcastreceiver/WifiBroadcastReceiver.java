@@ -46,7 +46,7 @@ public class WifiBroadcastReceiver extends BroadcastReceiver {
                 }
                 case WifiManager.WIFI_STATE_ENABLED: {
                     Log.d(TAG, "已经打开");
-                    mWiFiSettingActivity.sortScaResultView();
+                    mWiFiSettingActivity.queryWifiList();
                     break;
                 }
                 case WifiManager.WIFI_STATE_ENABLING: {
@@ -90,7 +90,7 @@ public class WifiBroadcastReceiver extends BroadcastReceiver {
             }
         } else if (WifiManager.SCAN_RESULTS_AVAILABLE_ACTION.equals(intent.getAction())) {
             Log.d(TAG, "网络列表变化了");
-            mWiFiSettingActivity.wifiListChange();
+            mWiFiSettingActivity.queryWifiList();
         }
 
     }
